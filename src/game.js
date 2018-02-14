@@ -163,6 +163,10 @@ class Game {
 
     *update() {
         while (this.__running) {
+            if (this.__bumble.keys.isDown(BumbleKeyCodes.R)) {
+                this.__reset();
+            }
+
             for (let system of this.systems) {
                 system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
             }
