@@ -67,8 +67,10 @@ class Game {
         entity.addComponent(new BlinkingComponent());
         this.__bumble.runCoroutine(function *() {
             yield BumbleUtility.wait(1.5);
-            entity.removeComponent(entity.components.blinkingComponent.name);
-        });
+            if (entity.components.blinkingComponent && this.__entities.includes(entity)) {
+                entity.removeComponent(entity.components.blinkingComponent.name);
+            }
+        }.bind(this));
     }
 
     resetPlayer() {
