@@ -2,10 +2,6 @@ class Game {
     constructor() {
         this.__bumble = new Bumble('asteroids', 720, 480, BumbleColor.fromRGB(0, 0, 0), 60);
         this.__bumble.runCoroutine(this.init.bind(this));
-        this.__bumble.preloader.loadAll([
-            //new BumbleResource('laser', 'audio/julien_matthey_science_fiction_laser_001.mp3', 'audio'),
-            new BumbleResource('data', 'data/data.json', 'data')
-        ]);
         this.__bumble.debug.showFramerate = true; 
     }
 
