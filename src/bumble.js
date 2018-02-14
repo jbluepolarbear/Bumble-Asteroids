@@ -232,7 +232,7 @@ class BumbleDebug {
     constructor(bumble) {
         this.__bumble = bumble;
         this.__backgroundColor = BumbleColor.fromRGBA(0, 0, 0, 1.0);
-        this.__foregroundColor = BumbleColor.fromRGB(0, 0, 0);
+        this.__foregroundColor = BumbleColor.fromRGB(255, 255, 255);
         this.__showFramerate = false;
     }
 
@@ -1187,8 +1187,16 @@ class BumbleCollision {
         return collision;
     }
 
-    static pointToShape(position, shape) {
-        let points = shape.points.slice(0, shape.points.length - 1);
+    static pointToShape(position, shape, transformationMatrix) {
+        if (!transformationMatrix) {
+            transformationMatrix = BumbleMatrix.identity();
+        }
+        
+        const centerPoint = shape.centerPoint.multiplyMatrix(transformationMatrix);
+        if (!BumbleCollision.pointToCircle(position, new BumbleCircle(centerPoint, shape.radius))) {
+            return false;
+        }
+        const points = shape.points.slice(0, shape.points.length - 1).map(point => point.multiplyMatrix(transformationMatrix));
         let closestPoint = points[0];
         let closestDistance = position.distance(closestPoint);
         let leftPoint = points[1];
@@ -1223,8 +1231,16 @@ class BumbleCollision {
         return sideA < 0;
     }
 
-    static circleToShape(circle, shape) {
-        let points = shape.points.slice(0, shape.points.length - 1);
+    static circleToShape(circle, shape, transformationMatrix) {
+        if (!transformationMatrix) {
+            transformationMatrix = BumbleMatrix.identity();
+        }
+        
+        const centerPoint = shape.centerPoint.multiplyMatrix(transformationMatrix);
+        if (!BumbleCollision.circleToCircle(circle, new BumbleCircle(centerPoint, shape.radius))) {
+            return false;
+        }
+        const points = shape.points.slice(0, shape.points.length - 1).map(point => point.multiplyMatrix(transformationMatrix));
         let closestPoint = points[0];
         let closestDistance = circle.center.distance(closestPoint);
         let leftPoint = points[1];

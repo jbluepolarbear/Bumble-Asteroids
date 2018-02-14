@@ -3,9 +3,6 @@ class Game {
         this.__bumble = new Bumble('asteroids', 720, 480, BumbleColor.fromRGB(0, 0, 0), 60);
         this.__bumble.runCoroutine(this.init.bind(this));
         this.__bumble.preloader.loadAll([
-            new BumbleResource('bumble', 'img/bumble.png', 'image'),
-            new BumbleResource('smoke', 'img/smoke.png', 'image'),
-            new BumbleResource('smoke_fire', 'img/smoke_fire.png', 'image'),
             //new BumbleResource('laser', 'audio/julien_matthey_science_fiction_laser_001.mp3', 'audio'),
             new BumbleResource('data', 'data/data.json', 'data')
         ]);
@@ -30,10 +27,80 @@ class Game {
         return shape;
     }
 
+    fireBullet(direction, additionalVelocity, position) {
+        const speed = 200;
+        const points = [];
+        const sections = 10;
+        const step = Math.PI * 2.0 / sections;
+        let cStep = 0.0;
+        const nRadius = 2.0;
+        for (let i = 0; i < sections; ++i) {
+            const x = Math.cos(cStep) * nRadius;
+            const y = Math.sin(cStep) * nRadius;
+            points.push(new BumbleVector(x, y));
+            cStep += step;
+        }
+        points.push(points[0]);
+        // create a shape
+        const shape = this.__bumble.getShape(points, BumbleColor.fromRGB(255, 255, 255));
+        shape.fill = false;
+
+        const entity = new Entity();
+        entity.addComponent(new CollisionComponent());
+        entity.addComponent(new PhysicsComponent());
+        entity.addComponent(new ShapeComponent());
+        entity.addComponent(new BulletComponent());
+        entity.addComponent(new PositionComponent());
+        entity.addComponent(new RemoveOffscreenComponent());
+        entity.components.physicsComponent.velocity = direction.multiplyValue(speed).add(additionalVelocity);
+        entity.components.positionComponent.position = position;
+        entity.components.shapeComponent.shape = shape;
+        this.__entities.push(entity);
+    }
+
+    markEntityForRemoval(entity) {
+        entity.active = false;
+        this.__entitiesToRemove.push(entity);
+    }
+
+    addBlinking(entity) {
+        entity.addComponent(new BlinkingComponent());
+        this.__bumble.runCoroutine(function *() {
+            yield BumbleUtility.wait(1.5);
+            entity.removeComponent(entity.components.blinkingComponent.name);
+        });
+    }
+
+    resetPlayer() {
+        const entity = this.__entities.find(entity => entity.components.playerControlledComponent);
+        entity.addComponent(new CollisionComponent());
+        entity.addComponent(new PhysicsComponent());
+        entity.addComponent(new ShapeComponent());
+        entity.addComponent(new RotationComponent());
+        entity.addComponent(new PlayerControlledComponent());
+        entity.addComponent(new PositionComponent());
+        entity.addComponent(new WrapComponent());
+        entity.components.physicsComponent.drag = 0.985;
+        entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
+        // create a shape
+        const shapeSize = 10.0;
+        const shape = this.__bumble.getShape([
+            new BumbleVector(shapeSize * 2, shapeSize * 0.75),
+            new BumbleVector(0, shapeSize * 1.5),
+            new BumbleVector(0, 0),
+            new BumbleVector(shapeSize * 2, shapeSize * 0.75)
+        ], BumbleColor.fromRGB(255, 255, 255));
+        shape.fill = false;
+        entity.components.shapeComponent.shape = shape;
+        entity.components.positionComponent.position = new BumbleVector(this.__bumble.width / 2.0, this.__bumble.height / 2.0);
+        this.addBlinking(entity);
+    }
+
     __reset() {
         this.__running = true;
 
         this.__entities = [];
+        this.__entitiesToRemove = [];
         for (let i = 0; i < 10; ++i) {
             const entity = new Entity();
             entity.addComponent(new CollisionComponent());
@@ -51,32 +118,37 @@ class Game {
         }
         
         const entity = new Entity();
-        entity.addComponent(new CollisionComponent());
-        entity.addComponent(new PhysicsComponent());
-        entity.addComponent(new ShapeComponent());
-        entity.addComponent(new RotationComponent());
         entity.addComponent(new PlayerControlledComponent());
-        entity.addComponent(new PositionComponent());
-        entity.addComponent(new WrapComponent());
-        entity.components.positionComponent.position = new BumbleVector(this.__bumble.width / 2.0, this.__bumble.height / 2.0);
-        entity.components.physicsComponent.drag = 0.985;
-        // create a shape
-        const shapeSize = 10.0;
-        const shape = this.__bumble.getShape([
-            new BumbleVector(shapeSize * 2, shapeSize * 0.75),
-            new BumbleVector(0, shapeSize * 1.5),
-            new BumbleVector(0, 0),
-            new BumbleVector(shapeSize * 2, shapeSize * 0.75)
-        ], BumbleColor.fromRGB(255, 255, 255));
-        shape.fill = false;
-        entity.components.shapeComponent.shape = shape;
         this.__entities.push(entity);
+        this.resetPlayer();
 
+        const userInputSystem = new UserInputSystem();
+        userInputSystem.observable.subscribe(new TimeInterval(0.5, (data) => {
+            if (data.key === BumbleKeyCodes.SPACE) {
+                this.fireBullet(data.extra.direction, data.extra.additionalVelocity, data.extra.position);
+            }
+        }).func);
+        const removeOffscreenSystem = new RemoveOffscreenSystem();
+        removeOffscreenSystem.observable.subscribe((entity) => {
+            this.markEntityForRemoval(entity);
+        });
+        const collisionSystem = new CollisionSystem();
+        collisionSystem.observable.subscribe((data) => {
+            if (data.collisionObject1.type === 'bullet') {
+                this.markEntityForRemoval(data.collisionObject1.entity);
+                this.markEntityForRemoval(data.collisionObject2.entity);
+            } else if (data.collisionObject1.type === 'player') {
+                this.resetPlayer();
+            }
+        });
         this.systems = [
-            new UserInputSystem(),
+            userInputSystem,
             new PhysicsSystem(),
+            collisionSystem,
+            removeOffscreenSystem,
             new AsteroidSystem(),
             new WrapSystem(),
+            new BlinkingSystem(),
             new RenderSystem()
         ];
     }
@@ -94,8 +166,13 @@ class Game {
     *update() {
         while (this.__running) {
             for (let system of this.systems) {
-                system.update(this.__entities, this.__bumble);
+                system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
             }
+
+            for (let entity of this.__entitiesToRemove) {
+                this.__entities.splice(this.__entities.indexOf(entity), 1);
+            }
+            this.__entitiesToRemove = [];
             yield;
         }
     }

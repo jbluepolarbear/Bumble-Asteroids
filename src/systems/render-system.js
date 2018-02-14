@@ -16,7 +16,19 @@ class RenderSystem extends ISystem {
             if (entity.components.rotationComponent) {
                 transform.rotation = entity.components.rotationComponent.rotation;
             }
+
             bumble.applyTransformation(transform.build());
+
+            let opacity = 1.0;
+            if (entity.components.opacityComponent) {
+                opacity = entity.components.opacityComponent.opacity;
+            }
+
+            if (entity.components.blinkingComponent && !entity.components.blinkingComponent.show) {
+                opacity *= 0.1;
+            }
+
+            bumble.context.globalAlpha = opacity;
             
             shape.draw();
         }

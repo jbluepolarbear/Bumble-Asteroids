@@ -11,17 +11,28 @@ class UserInputSystem extends ISystem {
 
             const playerTurnSpeed = 0.05;
             const playerBoostSpeed = 200.0;
-            if (bumble.keys.isDown(BumbleKeyCodes.LEFT)) {
+            if (bumble.keys.isDown(BumbleKeyCodes.LEFT) || bumble.keys.isDown(BumbleKeyCodes.A)) {
                 rotationComponent.rotation = (rotationComponent.rotation - playerTurnSpeed) % (-Math.PI * 2.0);
             }
 
-            if (bumble.keys.isDown(BumbleKeyCodes.RIGHT)) {
+            if (bumble.keys.isDown(BumbleKeyCodes.RIGHT) || bumble.keys.isDown(BumbleKeyCodes.D)) {
                 rotationComponent.rotation = (rotationComponent.rotation + playerTurnSpeed) % (Math.PI * 2.0);
             }
 
-            if (bumble.keys.isDown(BumbleKeyCodes.UP)) {
+            if (bumble.keys.isDown(BumbleKeyCodes.UP) || bumble.keys.isDown(BumbleKeyCodes.W)) {
                 const direction = new BumbleVector(Math.cos(rotationComponent.rotation), Math.sin(rotationComponent.rotation)).normalized();
                 physicsComponent.acceleration = direction.multiplyValue(playerBoostSpeed);
+            }
+            
+            if (bumble.keys.isDown(BumbleKeyCodes.SPACE)) {
+                this.observable.next({
+                    key: BumbleKeyCodes.SPACE, 
+                    extra: {
+                        direction: new BumbleVector(Math.cos(rotationComponent.rotation), Math.sin(rotationComponent.rotation)).normalized(),
+                        additionalVelocity: physicsComponent.velocity,
+                        position: entity.components.positionComponent.position
+                    }
+                });
             }
         }
     }

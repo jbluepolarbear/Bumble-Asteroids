@@ -1,23 +1,35 @@
 <html>
     <body>
-        <script src="https://rawgit.com/jbluepolarbear/Bumble/master/release/bumble.0.0.10.min.js"></script>
-        <script src="src/entity.js"></script>
+        <script src="https://rawgit.com/jbluepolarbear/Bumble/master/release/bumble.0.0.11.min.js"></script>
+        <script src="src/bumble.js"></script>
         <script src="src/component.js"></script>
+        <script src="src/entity.js"></script>
+        <script src="src/game.js"></script>
         <script src="src/system.js"></script>
         <script src="src/components/asteroid-component.js"></script>
+        <script src="src/components/blinking-component.js"></script>
+        <script src="src/components/bullet-component.js"></script>
         <script src="src/components/collision-component.js"></script>
+        <script src="src/components/opacity-component.js"></script>
         <script src="src/components/physics-component.js"></script>
-        <script src="src/components/player-controller-component.js"></script>
+        <script src="src/components/player-controlled-component.js"></script>
         <script src="src/components/position-component.js"></script>
+        <script src="src/components/remove-offscreen-component.js"></script>
         <script src="src/components/rotation-component.js"></script>
-        <script src="src/components/wrap-component.js"></script>
         <script src="src/components/shape-component.js"></script>
-        <script src="src/systems/user-input-system.js"></script>
-        <script src="src/systems/physics-system.js"></script>
+        <script src="src/components/wrap-component.js"></script>
+        <script src="src/observable/observable.js"></script>
+        <script src="src/observable/subscription.js"></script>
+        <script src="src/observable/time-Interval.js"></script>
         <script src="src/systems/asteroid-system.js"></script>
-        <script src="src/systems/wrap-system.js"></script>
+        <script src="src/systems/blinking-system.js"></script>
+        <script src="src/systems/collision-system.js"></script>
+        <script src="src/systems/physics-system.js"></script>
+        <script src="src/systems/remove-offscreen-system.js"></script>
         <script src="src/systems/render-system.js"></script>
-        <script src="src/game.js"></script>
+        <script src="src/systems/user-input-system.js"></script>
+        <script src="src/systems/wrap-system.js"></script>
+
         <script language="javascript" type="text/javascript">
             const game = new Game();
         </script>

@@ -6,11 +6,21 @@ class Entity {
         Entity.__count;
         Entity.__count++;
 
+        this.__active = true;
+
         this.__components = {};
     }
 
     get id() {
         return this.__id;
+    }
+
+    get active() {
+        return this.__active;
+    }
+
+    set active(value) {
+        this.__active = value;
     }
 
     get components() {
@@ -25,6 +35,10 @@ class Entity {
     removeComponent(componentName) {
         delete this.__components[componentName];
         return this;
+    }
+
+    clearComponents() {
+        this.__components = {};
     }
 }
 
