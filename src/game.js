@@ -23,7 +23,7 @@ class Game {
         }
         points.push(points[0]);
         // create a shape
-        const shape = this.__bumble.getShape(points, BumbleColor.fromRGB(255, 255, 255));
+        const shape = this.__bumble.getShape(points, BumbleColor.fromRGB(0, 255, 0));
         shape.fill = false;
         return shape;
     }
