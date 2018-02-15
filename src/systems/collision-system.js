@@ -12,7 +12,7 @@ class CollisionSystem extends ISystem {
 
     update(entities, bumble) {
         for (let entity of entities.filter((entity) => { return entity.components.collisionComponent && entity.components.shapeComponent; })) {
-            if (entity.components.asteroidComponent || entity.components.blinkingComponent) {
+            if (!entity.components.collisionComponent.collidable && entity.components.collisionComponent.collidableTypes.length === 0) {
                 continue;
             }
 
@@ -29,7 +29,7 @@ class CollisionSystem extends ISystem {
             const transform = transformation.build();
 
             for (let entity2 of entities) {
-                if (entity == entity2 || !entity2.components.asteroidComponent || entity2.components.blinkingComponent) {
+                if (entity == entity2 || !entity.components.collisionComponent.collidable || !entity.components.collisionComponent.collidableTypes.includes(entity2.components.collisionComponent.collidableType) || entity2.components.blinkingComponent) {
                     continue;
                 }
                 
@@ -46,57 +46,34 @@ class CollisionSystem extends ISystem {
                 const transform2 = transformation2.build();
                 const points2 = shape2.points.map((point) => point.multiplyMatrix(transform2));
 
-                if (entity.components.bulletComponent && entity2.components.asteroidComponent) {
-                    let collision = false;
-
-                    if (BumbleCollision.circleToShape(new BumbleCircle(shape.centerPoint.multiplyMatrix(transform), shape.radius), shape2, transform2)) {
-                        collision = true;
-                    }
-
+                const points1 = shape.points.map((point) => point.multiplyMatrix(transform));
+                let collision = false;
+                
+                for (let point of points1) {
                     if (collision) {
-                        this.observable.next({
-                            collisionObject1: {
-                                type: 'bullet',
-                                entity: entity
-                            },
-                            collisionObject2: {
-                                type: 'asteroid',
-                                entity: entity2
-                            }
-                        });
+                        break;
                     }
+                    collision = BumbleCollision.pointToShape(point, shape2, transform2);
                 }
 
-                if (entity.components.playerControlledComponent && entity2.components.asteroidComponent) {
-                    const points1 = shape.points.map((point) => point.multiplyMatrix(transform));
-                    let collision = false;
-                    
-                    for (let point of points1) {
-                        if (collision) {
-                            break;
-                        }
-                        collision = BumbleCollision.pointToShape(point, shape2, transform2);
-                    }
-
-                    for (let point of points2) {
-                        if (collision) {
-                            break;
-                        }
-                        collision = BumbleCollision.pointToShape(point, shape, transform);
-                    }
-
+                for (let point of points2) {
                     if (collision) {
-                        this.observable.next({
-                            collisionObject1: {
-                                type: 'player',
-                                entity: entity
-                            },
-                            collisionObject2: {
-                                type: 'asteroid',
-                                entity: entity2
-                            }
-                        });
+                        break;
                     }
+                    collision = BumbleCollision.pointToShape(point, shape, transform);
+                }
+
+                if (collision) {
+                    this.observable.next({
+                        collisionObject1: {
+                            type: entity.components.collisionComponent.collidableType,
+                            entity: entity
+                        },
+                        collisionObject2: {
+                            type: entity2.components.collisionComponent.collidableType,
+                            entity: entity2
+                        }
+                    });
                 }
             }
         }

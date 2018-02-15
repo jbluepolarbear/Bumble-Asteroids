@@ -51,6 +51,8 @@ class Game {
         entity.components.physicsComponent.velocity = direction.multiplyValue(speed).add(additionalVelocity);
         entity.components.positionComponent.position = position;
         entity.components.shapeComponent.shape = shape;
+        entity.components.collisionComponent.collidableType = 'bullet';
+        entity.components.collisionComponent.collidableTypes.push('asteroid')
         this.__entities.push(entity);
     }
 
@@ -61,10 +63,19 @@ class Game {
 
     addBlinking(entity) {
         entity.addComponent(new BlinkingComponent());
+        let oldCollidable = true;
+        if (entity.components.collisionComponent) {
+            oldCollidable = entity.components.collisionComponent.collidable;
+            entity.components.collisionComponent.collidable = false;
+        }
         this.__bumble.runCoroutine(function *() {
             yield BumbleUtility.wait(1.5);
             if (entity.components.blinkingComponent && this.__entities.includes(entity)) {
                 entity.removeComponent(entity.components.blinkingComponent.name);
+                
+                if (entity.components.collisionComponent) {
+                    entity.components.collisionComponent.collidable = oldCollidable;
+                }
             }
         }.bind(this));
     }
@@ -80,6 +91,9 @@ class Game {
         entity.addComponent(new WrapComponent());
         entity.components.physicsComponent.drag = 0.985;
         entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
+        entity.components.collisionComponent.collidableType = 'player';
+        entity.components.collisionComponent.collidableTypes.push('asteroid');
+
         // create a shape
         const shapeSize = 10.0;
         const shape = this.__bumble.getShape([
@@ -112,6 +126,7 @@ class Game {
             entity.components.positionComponent.position = new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
             entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
             entity.components.shapeComponent.shape = this.buildAsteroid(20, 5, 10);
+            entity.components.collisionComponent.collidableType = 'asteroid';
             this.__entities.push(entity);
         }
         
