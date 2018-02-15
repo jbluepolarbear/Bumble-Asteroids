@@ -159,6 +159,33 @@ class Game {
         this.addBlinking(entity);
     }
 
+    resetFriendShip() {
+        const entity = this.__entities.find(entity => entity.components.friendShipComponent);
+        entity.addComponent(new CollisionComponent());
+        entity.addComponent(new PhysicsComponent());
+        entity.addComponent(new ShapeComponent());
+        entity.addComponent(new RotationComponent());
+        entity.addComponent(new FriendShipComponent());
+        entity.addComponent(new PositionComponent());
+        entity.addComponent(new WrapComponent());
+        entity.components.physicsComponent.drag = 0.985;
+        entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
+        entity.components.collisionComponent.collidableType = 'ship';
+
+        // create a shape
+        const shapeSize = 10.0;
+        const shape = this.__bumble.getShape([
+            new BumbleVector(shapeSize * 2, shapeSize * 0.75),
+            new BumbleVector(0, shapeSize * 1.5),
+            new BumbleVector(0, 0),
+            new BumbleVector(shapeSize * 2, shapeSize * 0.75)
+        ], BumbleColor.fromRGB(0, 0, 255));
+        shape.fill = false;
+        entity.components.shapeComponent.shape = shape;
+        entity.components.positionComponent.position = new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
+        this.addBlinking(entity);
+    }
+
     __reset() {
         this.__running = true;
 
@@ -172,9 +199,20 @@ class Game {
         entity.addComponent(new PlayerControlledComponent());
         this.__entities.push(entity);
         this.resetPlayer();
+        
+        const friendEntity = new Entity();
+        friendEntity.addComponent(new FriendShipComponent());
+        this.__entities.push(friendEntity);
+        this.resetFriendShip();
 
         const userInputSystem = new UserInputSystem();
         userInputSystem.observable.subscribe(new TimeInterval(0.5, (data) => {
+            if (data.key === BumbleKeyCodes.SPACE) {
+                this.fireBullet(data.extra.direction, data.extra.additionalVelocity, data.extra.position);
+            }
+        }).func);
+        const friendShipSystem = new FriendShipSystem();
+        friendShipSystem.observable.subscribe(new TimeInterval(0.5, (data) => {
             if (data.key === BumbleKeyCodes.SPACE) {
                 this.fireBullet(data.extra.direction, data.extra.additionalVelocity, data.extra.position);
             }
@@ -200,6 +238,7 @@ class Game {
         });
         this.systems = [
             userInputSystem,
+            friendShipSystem,
             new PhysicsSystem(),
             collisionSystem,
             removeOffscreenSystem,
