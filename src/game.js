@@ -3,9 +3,14 @@ class Game {
         this.__bumble = new Bumble('asteroids', 720, 480, BumbleColor.fromRGB(0, 0, 0), 60);
         this.__bumble.runCoroutine(this.init.bind(this));
         this.__bumble.debug.showFramerate = true; 
+        this.__asteroidSizes = {
+            large: 25,
+            medium: 15,
+            small: 5
+        };
     }
 
-    buildAsteroid(radius, noise, sections) {
+    buildAsteroidShape(radius, noise, sections) {
         const points = [];
         const step = Math.PI * 2.0 / sections;
         let cStep = 0.0;
@@ -21,6 +26,52 @@ class Game {
         const shape = this.__bumble.getShape(points, BumbleColor.fromRGB(255, 255, 255));
         shape.fill = false;
         return shape;
+    }
+
+    buildAsteroid(size, position) {
+        const entity = new Entity();
+        entity.addComponent(new CollisionComponent());
+        entity.addComponent(new PhysicsComponent());
+        entity.addComponent(new ShapeComponent());
+        entity.addComponent(new RotationComponent());
+        entity.addComponent(new AsteroidComponent());
+        entity.addComponent(new PositionComponent());
+        entity.addComponent(new WrapComponent());
+        entity.components.physicsComponent.velocity = new BumbleVector(BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0), BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0));
+        entity.components.positionComponent.position = position ? position : new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
+        entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
+        entity.components.shapeComponent.shape = this.buildAsteroidShape(size, size * 0.2, 10);
+        entity.components.collisionComponent.collidableType = 'asteroid';
+        entity.components.asteroidComponent.size = size;
+
+        return entity;
+    }
+
+    splitAsteroid(size, position) {
+        let newSize = size;
+        if (size === this.__asteroidSizes.large) {
+            newSize = this.__asteroidSizes.medium;
+        } else if (size === this.__asteroidSizes.medium) {
+            newSize = this.__asteroidSizes.small;
+        } else if (size === this.__asteroidSizes.small) {
+            return;
+        }
+
+        const dir = BumbleUtility.randomFloat(Math.PI * 2.0);
+        const radius = BumbleUtility.randomFloat(size);
+        {
+            const newPosition = new BumbleVector(Math.cos(dir), Math.sin(dir)).multiplyValue(radius).add(position);
+            const entity = this.buildAsteroid(newSize, newPosition);
+            this.__entities.push(entity);
+            this.addBlinking(entity);
+        }
+
+        {
+            const newPosition = new BumbleVector(Math.cos(-dir), Math.sin(-dir)).multiplyValue(radius).add(position);
+            const entity = this.buildAsteroid(newSize, newPosition);
+            this.__entities.push(entity);
+            this.addBlinking(entity);
+        }
     }
 
     fireBullet(direction, additionalVelocity, position) {
@@ -114,20 +165,7 @@ class Game {
         this.__entities = [];
         this.__entitiesToRemove = [];
         for (let i = 0; i < 10; ++i) {
-            const entity = new Entity();
-            entity.addComponent(new CollisionComponent());
-            entity.addComponent(new PhysicsComponent());
-            entity.addComponent(new ShapeComponent());
-            entity.addComponent(new RotationComponent());
-            entity.addComponent(new AsteroidComponent());
-            entity.addComponent(new PositionComponent());
-            entity.addComponent(new WrapComponent());
-            entity.components.physicsComponent.velocity = new BumbleVector(BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0), BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0));
-            entity.components.positionComponent.position = new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
-            entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
-            entity.components.shapeComponent.shape = this.buildAsteroid(20, 5, 10);
-            entity.components.collisionComponent.collidableType = 'asteroid';
-            this.__entities.push(entity);
+            this.__entities.push(this.buildAsteroid(this.__asteroidSizes.large));
         }
         
         const entity = new Entity();
@@ -150,6 +188,12 @@ class Game {
             if (data.collisionObject1.type === 'bullet') {
                 this.markEntityForRemoval(data.collisionObject1.entity);
                 this.markEntityForRemoval(data.collisionObject2.entity);
+                if (data.collisionObject2.type === 'asteroid') {
+                    this.splitAsteroid(
+                        data.collisionObject2.entity.components.asteroidComponent.size,
+                        data.collisionObject2.entity.components.positionComponent.position
+                    );
+                }
             } else if (data.collisionObject1.type === 'player') {
                 this.resetPlayer();
             }
