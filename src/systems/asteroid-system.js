@@ -1,4 +1,6 @@
-class AsteroidSystem extends ISystem {
+import { ISystem } from '../system.js';
+
+export class AsteroidSystem extends ISystem {
     constructor() {
         super();
     }

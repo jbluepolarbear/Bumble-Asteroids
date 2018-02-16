@@ -1,4 +1,7 @@
-class UserInputSystem extends ISystem {
+import { ISystem } from '../system.js';
+import { BumbleVector, BumbleKeyCodes } from '../bumble.js';
+
+export class UserInputSystem extends ISystem {
     constructor() {
         super();
     }

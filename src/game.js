@@ -1,4 +1,33 @@
-class Game {
+import { Bumble, BumbleUtility, BumbleVector, BumbleColor, BumbleKeyCodes } from './bumble.js';
+import { Entity } from './entity.js';
+import { TimeInterval } from './observable/time-Interval.js';
+
+// Components
+import { CollisionComponent } from './components/collision-component.js';
+import { PhysicsComponent } from './components/physics-component.js';
+import { ShapeComponent } from './components/shape-component.js';
+import { RotationComponent } from './components/rotation-component.js';
+import { AsteroidComponent } from './components/asteroid-component.js';
+import { PositionComponent } from './components/position-component.js';
+import { WrapComponent } from './components/wrap-component.js';
+import { BulletComponent } from './components/bullet-component.js';
+import { RemoveOffscreenComponent } from './components/remove-offscreen-component.js';
+import { BlinkingComponent } from './components/blinking-component.js';
+import { FriendShipComponent } from './components/friend-ship-component.js';
+import { PlayerControlledComponent } from './components/player-controlled-component.js';
+
+// System
+import { CollisionSystem } from './systems/collision-system.js';
+import { PhysicsSystem } from './systems/physics-system.js';
+import { WrapSystem } from './systems/wrap-system.js';
+import { BlinkingSystem } from './systems/blinking-system.js';
+import { FriendShipSystem } from './systems/friend-ship-system.js';
+import { RemoveOffscreenSystem } from './systems/remove-offscreen-system.js';
+import { AsteroidSystem } from './systems/asteroid-system.js';
+import { UserInputSystem } from './systems/user-input-system.js';
+import { RenderSystem } from './systems/render-system.js';
+
+export class Game {
     constructor() {
         this.__bumble = new Bumble('asteroids', 720, 480, BumbleColor.fromRGB(0, 0, 0), 60);
         this.__bumble.runCoroutine(this.init.bind(this));

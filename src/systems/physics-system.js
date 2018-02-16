@@ -1,4 +1,7 @@
-class PhysicsSystem extends ISystem {
+import { ISystem } from '../system.js';
+import { BumbleVector } from '../bumble.js';
+
+export class PhysicsSystem extends ISystem {
     constructor() {
         super();
     }

@@ -7,7 +7,7 @@ filesToSkip = [
 files = [file for file in [file.replace('\\', '/') for file in itertools.chain(glob.iglob('src/*.js'), glob.iglob('src/**/*.js'))] if file not in filesToSkip]
 scriptInput = ''
 for file in files:
-    scriptInput += '        <script src="' + file + '"></script>\n'
+    scriptInput += '        <script type="module" src="' + file + '"></script>\n'
 with open('index-template.html', 'r') as inFile:
     contents = inFile.read()
     contents = contents.replace('{{SCRIPTS}}', scriptInput)

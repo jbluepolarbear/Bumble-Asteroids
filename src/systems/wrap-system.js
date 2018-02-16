@@ -1,4 +1,6 @@
-class WrapSystem extends ISystem {
+import { ISystem } from '../system.js';
+
+export class WrapSystem extends ISystem {
     constructor() {
         super()
     }

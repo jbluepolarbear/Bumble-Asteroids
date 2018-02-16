@@ -1,4 +1,7 @@
-class CollisionSystem extends ISystem {
+import { ISystem } from '../system.js';
+import { BumbleTransformation, BumbleCollision } from '../bumble.js';
+
+export class CollisionSystem extends ISystem {
     constructor() {
         super();
     }

@@ -1,4 +1,7 @@
-class FriendShipSystem extends ISystem {
+import { ISystem } from '../system.js';
+import { BumbleVector, BumbleKeyCodes } from '../bumble.js';
+
+export class FriendShipSystem extends ISystem {
     constructor() {
         super();
     }

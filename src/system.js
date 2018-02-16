@@ -1,4 +1,6 @@
-class ISystem {
+import { Observable } from './observable/observable.js';
+
+export class ISystem {
     constructor() {
         this.__observable = new Observable();
     }

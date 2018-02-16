@@ -1,4 +1,6 @@
-class BlinkingSystem extends ISystem {
+import { ISystem } from '../system.js';
+
+export class BlinkingSystem extends ISystem {
     constructor() {
         super();
     }

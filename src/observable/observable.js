@@ -1,4 +1,6 @@
-class Observable {
+import { Subscription } from './subscription.js';
+
+export class Observable {
     constructor() {
         this.__functionMap = new Map();
         this.__subscriptionId = 0;

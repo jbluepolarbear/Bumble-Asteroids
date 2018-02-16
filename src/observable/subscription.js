@@ -1,4 +1,4 @@
-class Subscription {
+export class Subscription {
     constructor(observable, subscriptionId) {
         this.__obersvable = observable;
         this.__subscriptionId = subscriptionId;

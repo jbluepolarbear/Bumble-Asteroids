@@ -1,4 +1,4 @@
-class TimeInterval {
+export class TimeInterval {
     constructor(interval, func) {
         this.__interval = interval;
         this.__func = func;

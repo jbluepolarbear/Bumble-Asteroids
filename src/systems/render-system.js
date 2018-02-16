@@ -1,4 +1,7 @@
-class RenderSystem extends ISystem {
+import { ISystem } from '../system.js';
+import { BumbleTransformation } from '../bumble.js';
+
+export class RenderSystem extends ISystem {
     constructor() {
         super();
     }

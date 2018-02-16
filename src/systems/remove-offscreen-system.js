@@ -1,6 +1,8 @@
-class RemoveOffscreenSystem extends ISystem {
+import { ISystem } from '../system.js';
+
+export class RemoveOffscreenSystem extends ISystem {
     constructor() {
-        super()
+        super();
     }
 
     update(entities, bumble) {

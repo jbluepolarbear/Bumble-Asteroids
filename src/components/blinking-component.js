@@ -1,4 +1,6 @@
-class BlinkingComponent extends IComponent {
+import { IComponent } from '../component.js';
+
+export class BlinkingComponent extends IComponent {
     constructor() {
         super('blinkingComponent');
         this.currentTime = 0;

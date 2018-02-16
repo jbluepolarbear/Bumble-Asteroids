@@ -1,4 +1,4 @@
-class Entity {
+export class Entity {
     constructor() {
         // Generate a pseudo random ID
         this.__id = (+new Date()).toString(16) + 
