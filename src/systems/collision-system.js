@@ -1,5 +1,5 @@
 import { ISystem } from '../system.js';
-import { BumbleTransformation, BumbleCollision } from '../bumble.js';
+import { BumbleTransformation, BumbleCollision, BumblePolygon } from '../bumble.js';
 
 export class CollisionSystem extends ISystem {
     constructor() {
@@ -15,7 +15,7 @@ export class CollisionSystem extends ISystem {
 
     update(entities, bumble) {
         for (let entity of entities.filter((entity) => { return entity.components.collisionComponent && entity.components.shapeComponent; })) {
-            if (!entity.components.collisionComponent.collidable && entity.components.collisionComponent.collidableTypes.length === 0) {
+            if (!entity.active || (!entity.components.collisionComponent.collidable && entity.components.collisionComponent.collidableTypes.length === 0)) {
                 continue;
             }
 
@@ -32,7 +32,7 @@ export class CollisionSystem extends ISystem {
             const transform = transformation.build();
 
             for (let entity2 of entities) {
-                if (entity == entity2 || !entity.components.collisionComponent.collidable || !entity.components.collisionComponent.collidableTypes.includes(entity2.components.collisionComponent.collidableType) || entity2.components.blinkingComponent) {
+                if (!entity2.active || entity == entity2 || !entity.components.collisionComponent.collidable || !entity.components.collisionComponent.collidableTypes.includes(entity2.components.collisionComponent.collidableType) || entity2.components.blinkingComponent) {
                     continue;
                 }
                 
@@ -47,23 +47,23 @@ export class CollisionSystem extends ISystem {
                     transformation2.rotation = entity2.components.rotationComponent.rotation;
                 }
                 const transform2 = transformation2.build();
-                const points2 = shape2.points.map((point) => point.multiplyMatrix(transform2));
+                const points2 = shape2.points.slice(0, shape2.points.length - 1).map((point) => point.multiplyMatrix(transform2));
 
-                const points1 = shape.points.map((point) => point.multiplyMatrix(transform));
+                const points1 = shape.points.slice(0, shape.points.length - 1).map((point) => point.multiplyMatrix(transform));
                 let collision = false;
                 
                 for (let point of points1) {
                     if (collision) {
                         break;
                     }
-                    collision = BumbleCollision.pointToShape(point, shape2, transform2);
+                    collision = BumbleCollision.pointToPolygon(point, new BumblePolygon(points2));
                 }
 
                 for (let point of points2) {
                     if (collision) {
                         break;
                     }
-                    collision = BumbleCollision.pointToShape(point, shape, transform);
+                    collision = BumbleCollision.pointToPolygon(point, new BumblePolygon(points1));
                 }
 
                 if (collision) {
@@ -77,6 +77,7 @@ export class CollisionSystem extends ISystem {
                             entity: entity2
                         }
                     });
+                    break;
                 }
             }
         }

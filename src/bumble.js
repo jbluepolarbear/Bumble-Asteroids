@@ -19,8 +19,10 @@ import {
     BumbleTransformation,
     BumbleRect,
     BumbleOrientedRect,
-    BumbleCircle
-} from 'https://rawgit.com/jbluepolarbear/Bumble/master/release/bumble.0.0.12.min.js';
+    BumbleCircle,
+    BumblePolygon
+} from 'https://cdn.rawgit.com/jbluepolarbear/Bumble/master/release/bumble.0.0.13.min.js';
+//from '../bumble.js';
 export { 
     Bumble,
     BumbleDebug,
@@ -42,5 +44,6 @@ export {
     BumbleTransformation,
     BumbleRect,
     BumbleOrientedRect,
-    BumbleCircle
+    BumbleCircle,
+    BumblePolygon
 }

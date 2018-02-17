@@ -1,4 +1,4 @@
-import { Bumble, BumbleUtility, BumbleVector, BumbleColor, BumbleKeyCodes } from './bumble.js';
+import { Bumble, BumbleUtility, BumbleVector, BumbleColor, BumbleKeyCodes, BumblePolygon } from './bumble.js';
 import { Entity } from './entity.js';
 import { TimeInterval } from './observable/time-Interval.js';
 
@@ -69,7 +69,7 @@ export class Game {
         entity.components.physicsComponent.velocity = new BumbleVector(BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0), BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0));
         entity.components.positionComponent.position = position ? position : new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
         entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
-        entity.components.shapeComponent.shape = this.buildAsteroidShape(size, size * 0.2, 10);
+        entity.components.shapeComponent.shape = this.buildAsteroidShape(size, size * 0.4, 10);
         entity.components.collisionComponent.collidableType = 'asteroid';
         entity.components.asteroidComponent.size = size;
 
