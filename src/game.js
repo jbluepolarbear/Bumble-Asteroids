@@ -69,7 +69,7 @@ export class Game {
         entity.components.physicsComponent.velocity = new BumbleVector(BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0), BumbleUtility.randomSign() * (BumbleUtility.randomFloat(20.0) + 10.0));
         entity.components.positionComponent.position = position ? position : new BumbleVector(BumbleUtility.randomFloat(this.__bumble.width), BumbleUtility.randomFloat(this.__bumble.height));
         entity.components.rotationComponent.rotation = BumbleUtility.randomFloat(Math.PI * 2.0);
-        entity.components.shapeComponent.shape = this.buildAsteroidShape(size, size * 0.4, 10);
+        entity.components.shapeComponent.shape = this.buildAsteroidShape(size, size * 0.3, 10);
         entity.components.collisionComponent.collidableType = 'asteroid';
         entity.components.asteroidComponent.size = size;
 
@@ -216,6 +216,7 @@ export class Game {
     }
 
     __reset() {
+        this.__score = 0;
         this.__running = true;
 
         this.__entities = [];
@@ -256,8 +257,18 @@ export class Game {
                 this.markEntityForRemoval(data.collisionObject1.entity);
                 this.markEntityForRemoval(data.collisionObject2.entity);
                 if (data.collisionObject2.type === 'asteroid') {
+                    const size = data.collisionObject2.entity.components.asteroidComponent.size;
+                    
+                    if (size === this.__asteroidSizes.large) {
+                        this.__score += 1000;
+                    } else if (size === this.__asteroidSizes.medium) {
+                        this.__score += 5000;
+                    } else if (size === this.__asteroidSizes.small) {
+                        this.__score += 25000
+                    }
+
                     this.splitAsteroid(
-                        data.collisionObject2.entity.components.asteroidComponent.size,
+                        size,
                         data.collisionObject2.entity.components.positionComponent.position
                     );
                 }
@@ -297,6 +308,7 @@ export class Game {
             for (let system of this.systems) {
                 system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
             }
+            this.__drawScore();
 
             for (let entity of this.__entitiesToRemove) {
                 this.__entities.splice(this.__entities.indexOf(entity), 1);
@@ -307,13 +319,13 @@ export class Game {
     }
 
     __drawScore() {
-        this.__bumble.context.save();
+        this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.__bumble.context.globalAlpha = 1.0;
         this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 0, 0, 0.5);
-        this.__bumble.context.fillRect(this.__bumble.width - 40, 2, 38, this.__squareSize - 4);
+        this.__bumble.context.fillRect(this.__bumble.width / 2.0 - 80, 0, 160, 50);
         this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
-        this.__bumble.context.font = "15px Arial";
+        this.__bumble.context.font = "30px Arial";
         this.__bumble.context.textAlign = "center";
-        this.__bumble.context.fillText(this.__timeTaken.toString().padStart(3, 0), this.__bumble.width - 19, this.__squareSize - 5, 36);
-        this.__bumble.context.restore();
+        this.__bumble.context.fillText(this.__score.toString().padStart(7, 0), this.__bumble.width / 2.0, 25, 150);
     }
 }
