@@ -27,6 +27,7 @@ import { AsteroidSystem } from './systems/asteroid-system.js';
 import { UserInputSystem } from './systems/user-input-system.js';
 import { RenderSystem } from './systems/render-system.js';
 
+const HighScoreKey = 'high score';
 export class Game {
     constructor() {
         this.__bumble = new Bumble('asteroids', 720, 480, BumbleColor.fromRGB(0, 0, 0), 60);
@@ -37,6 +38,12 @@ export class Game {
             medium: 15,
             small: 5
         };
+        const gamestate = this.__bumble.gameState;
+        let highScore = gamestate.getState(HighScoreKey);
+        if (highScore === null) {
+            highScore = 0;
+        }
+        gamestate.setState(HighScoreKey, highScore);
     }
 
     buildAsteroidShape(radius, noise, sections) {
@@ -215,9 +222,19 @@ export class Game {
         this.addBlinking(entity);
     }
 
+    __bonusMuliplier() {
+        const timeDiffBonus = 60.0 * 1000;
+        const timeDiff = Date.now() - this.__startTime;
+        const percentage = Math.max(0, (timeDiffBonus - timeDiff) / timeDiffBonus);
+        return 1.0 + percentage * 2.0;
+    }
+
     __reset() {
         this.__score = 0;
         this.__running = true;
+        this.__startTime = Date.now();
+        this.__lives = 3;
+        this.__ended = false;
 
         this.__entities = [];
         this.__entitiesToRemove = [];
@@ -260,11 +277,14 @@ export class Game {
                     const size = data.collisionObject2.entity.components.asteroidComponent.size;
                     
                     if (size === this.__asteroidSizes.large) {
-                        this.__score += 1000;
+                        this.__score += Math.floor(1000 * this.__bonusMuliplier());
                     } else if (size === this.__asteroidSizes.medium) {
-                        this.__score += 5000;
+                        this.__score += Math.floor(5000 * this.__bonusMuliplier());
                     } else if (size === this.__asteroidSizes.small) {
-                        this.__score += 25000
+                        this.__score += Math.floor(25000 * this.__bonusMuliplier());
+                    }
+                    if (this.__score > this.__bumble.gameState.getState(HighScoreKey)) {
+                        this.__bumble.gameState.setState(HighScoreKey, this.__score);
                     }
 
                     this.splitAsteroid(
@@ -274,6 +294,11 @@ export class Game {
                 }
             } else if (data.collisionObject1.type === 'player') {
                 this.resetPlayer();
+                this.__lives -= 1;
+                if (this.__lives < 0) {
+                    this.__ended = true;
+                    this.__lives = -1;
+                }
             }
         });
         this.systems = [
@@ -306,26 +331,92 @@ export class Game {
             }
 
             for (let system of this.systems) {
-                system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
+                if (this.__ended) {
+                    if (system instanceof RenderSystem) {
+                        system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
+                    }
+                } else {
+                    system.update(this.__entities.filter((entity) => { return entity.active; }), this.__bumble);
+                }
             }
             this.__drawScore();
+            this.__drawHighScore();
+            this.__drawLives();
+
+            if (this.__ended) {
+                if (this.__lives < 0) {
+                    this.__drawLose();
+                } else {
+                    this.__drawWon();
+                }
+            }
 
             for (let entity of this.__entitiesToRemove) {
                 this.__entities.splice(this.__entities.indexOf(entity), 1);
             }
             this.__entitiesToRemove = [];
+            if (!this.__entities.find((entity) => entity.components.asteroidComponent)) {
+                this.__ended = true;
+            }
             yield;
         }
     }
-
-    __drawScore() {
+    
+    __drawLives() {
+        const size = this.__bumble.width / 3.0;
         this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
         this.__bumble.context.globalAlpha = 1.0;
-        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 0, 0, 0.5);
-        this.__bumble.context.fillRect(this.__bumble.width / 2.0 - 80, 0, 160, 50);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 0, 0, 0.25);
+        this.__bumble.context.fillRect(0, 0, size, 50);
         this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
-        this.__bumble.context.font = "30px Arial";
+        this.__bumble.context.font = "20px Arial";
         this.__bumble.context.textAlign = "center";
-        this.__bumble.context.fillText(this.__score.toString().padStart(7, 0), this.__bumble.width / 2.0, 25, 150);
+        this.__bumble.context.fillText(`LIVES: ${Math.max(0, this.__lives).toString().padStart(1, 0)}`, size / 4.0, 25, size);
+    }
+
+    __drawScore() {
+        const size = this.__bumble.width / 3.0;
+        this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.__bumble.context.globalAlpha = 1.0;
+        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 0, 0, 0.25);
+        this.__bumble.context.fillRect(this.__bumble.width / 2.0 - size / 2.0, 0, size, 50);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
+        this.__bumble.context.font = "20px Arial";
+        this.__bumble.context.textAlign = "center";
+        this.__bumble.context.fillText(`SCORE: ${this.__score.toString().padStart(7, 0)}`, this.__bumble.width / 2.0, 25, size);
+    }
+
+    __drawHighScore() {
+        const size = this.__bumble.width / 3.0;
+        this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.__bumble.context.globalAlpha = 1.0;
+        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 0, 0, 0.25);
+        this.__bumble.context.fillRect(this.__bumble.width - size, 0, size, 50);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
+        this.__bumble.context.font = "20px Arial";
+        this.__bumble.context.textAlign = "center";
+        this.__bumble.context.fillText(`HIGH SCORE: ${this.__bumble.gameState.getState(HighScoreKey).toString().padStart(7, 0)}`, this.__bumble.width - size / 2.0, 25, this.__bumble.width / 3.0);
+    }
+
+    __drawLose() {
+        this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 255, 0, 0.25);
+        this.__bumble.context.fillRect(this.__bumble.width * 0.15, this.__bumble.height * 0.15, this.__bumble.width * 0.7, this.__bumble.height * 0.7);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
+        this.__bumble.context.font = "60px Arial";
+        this.__bumble.context.textAlign = "center";
+        this.__bumble.context.fillText('Game Over', this.__bumble.width / 2.0, this.__bumble.height / 2.0 - 35, this.__bumble.width * 0.85);
+        this.__bumble.context.fillText('(R) to restart', this.__bumble.width / 2.0, this.__bumble.height / 2.0 + 65, this.__bumble.width * 0.85);
+    }
+
+    __drawWon() {
+        this.__bumble.context.setTransform(1, 0, 0, 1, 0, 0);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGBA(0, 255, 0, 0.25);
+        this.__bumble.context.fillRect(this.__bumble.width * 0.15, this.__bumble.height * 0.15, this.__bumble.width * 0.7, this.__bumble.height * 0.7);
+        this.__bumble.context.fillStyle = BumbleColor.fromRGB(255, 255, 255);
+        this.__bumble.context.font = "60px Arial";
+        this.__bumble.context.textAlign = "center";
+        this.__bumble.context.fillText('Game Won', this.__bumble.width / 2.0, this.__bumble.height / 2.0 - 35, this.__bumble.width * 0.85);
+        this.__bumble.context.fillText('(R) to restart', this.__bumble.width / 2.0, this.__bumble.height / 2.0 + 65, this.__bumble.width * 0.85);
     }
 }
